@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.io.*;
 
-public class ArrayListAutos implements Contabilidad {
+public class ArrayListAutos {
     private ArrayList<Autos1> inventarioAutos = new ArrayList<>();
     private ArrayList<Cliente> listaClientes = new ArrayList<>();
     private static final String INVENTARIO_FILE = "inventario.txt";
@@ -59,8 +59,7 @@ public class ArrayListAutos implements Contabilidad {
         }
     }
 
-    @Override
-    public void trabajoContable() {
+    public void mostrarContabilidad() {
         double totalIngresos = 0;
         double totalCostos = 0;
         double gananciasPorVentas = 0;
@@ -74,9 +73,9 @@ public class ArrayListAutos implements Contabilidad {
         }
 
         for (Cliente cliente : listaClientes) {
-            totalIngresos += cliente.getPrecioCompra();
             for (Autos1 auto : inventarioAutos) {
-                if (cliente.getUnidadComprada().contains(auto.getMarca()) && cliente.getUnidadComprada().contains(auto.getVersion())) {
+                if (cliente.getUnidadComprada().contains(auto.getMarca()) && 
+                    cliente.getUnidadComprada().contains(auto.getVersion())) {
                     gananciasPorVentas += cliente.getPrecioCompra() - auto.getPrecioCompra();
                     break;
                 }
@@ -91,31 +90,34 @@ public class ArrayListAutos implements Contabilidad {
         System.out.println("-------------------------------------------------");
     }
 
-    public void mostrarContabilidad() {
-        trabajoContable();
-    }
-
     public ArrayList<Autos1> getInventarioAutos() {
         return inventarioAutos;
     }
 
-    // Método para guardar el inventario en un archivo
+    // Método para guardar el inventario en un archivo con formato tabular
     private void guardarInventario() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(INVENTARIO_FILE))) {
+            // Escribir encabezado
+            writer.println(String.format("%-10s|%-18s|%-15s|%-15s|%-15s|%-10s|%-6s|%-12s|%-12s|%-10s|%-20s|%-12s|%-20s",
+                    "Tipo", "N. Serie", "Marca", "Modelo", "Version", "Color", "Año", "P. Compra", "P. Venta", 
+                    "Extra1", "Extra2", "Extra3", "Nombre Pers."));
+            writer.println("-".repeat(174));
+
+            // Escribir datos
             for (Autos1 auto : inventarioAutos) {
                 if (auto instanceof Nuevos) {
                     Nuevos nuevo = (Nuevos) auto;
-                    writer.println("NUEVO," + auto.getNserie() + "," + auto.getMarca() + "," + auto.getModelo() + ","
-                            + auto.getVersion() + "," + auto.getColor() + "," + auto.getAño() + ","
-                            + auto.getPrecioCompra() + "," + auto.getPrecioVenta() + "," + nuevo.getGarantia() + ","
-                            + nuevo.getAccesorios() + "," + nuevo.getEnganche() + "," + auto.getNombrepers());
+                    writer.println(String.format("%-10s|%-18s|%-15s|%-15s|%-15s|%-10s|%-6.0f|%-12.2f|%-12.2f|%-10d|%-20s|%-12.2f|%-20s",
+                            "NUEVO", auto.getNserie(), auto.getMarca(), auto.getModelo(), auto.getVersion(), 
+                            auto.getColor(), auto.getAño(), auto.getPrecioCompra(), auto.getPrecioVenta(),
+                            nuevo.getGarantia(), nuevo.getAccesorios(), nuevo.getEnganche(), auto.getNombrepers()));
                 } else if (auto instanceof Seminuevos) {
                     Seminuevos seminuevo = (Seminuevos) auto;
-                    writer.println("SEMINUEVO," + auto.getNserie() + "," + auto.getMarca() + "," + auto.getModelo() + ","
-                            + auto.getVersion() + "," + auto.getColor() + "," + auto.getAño() + ","
-                            + auto.getPrecioCompra() + "," + auto.getPrecioVenta() + "," + seminuevo.getKilometraje() + ","
-                            + seminuevo.getCantidadDueños() + "," + seminuevo.getNacionalidad() + ","
-                            + auto.getNombrepers());
+                    writer.println(String.format("%-10s|%-18s|%-15s|%-15s|%-15s|%-10s|%-6.0f|%-12.2f|%-12.2f|%-10.2f|%-20s|%-12s|%-20s",
+                            "SEMINUEVO", auto.getNserie(), auto.getMarca(), auto.getModelo(), auto.getVersion(), 
+                            auto.getColor(), auto.getAño(), auto.getPrecioCompra(), auto.getPrecioVenta(),
+                            seminuevo.getKilometraje(), seminuevo.getCantidadDueños(), seminuevo.getNacionalidad(), 
+                            auto.getNombrepers()));
                 }
             }
         } catch (IOException e) {
@@ -132,50 +134,67 @@ public class ArrayListAutos implements Contabilidad {
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
+            boolean firstLine = true; // Saltar encabezado
+            boolean secondLine = true; // Saltar línea de guiones
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length < 12) continue; // Ignorar líneas mal formadas
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                }
+                if (secondLine) {
+                    secondLine = false;
+                    continue;
+                }
+                String[] parts = line.split("\\|");
+                if (parts.length < 13) continue; // Ignorar líneas mal formadas
 
-                String tipo = parts[0];
-                String nserie = parts[1];
-                String marca = parts[2];
-                String modelo = parts[3];
-                String version = parts[4];
-                String color = parts[5];
-                double año = Double.parseDouble(parts[6]);
-                double precioCompra = Double.parseDouble(parts[7]);
-                double precioVenta = Double.parseDouble(parts[8]);
-                String nombrepers = parts[parts.length - 1];
+                String tipo = parts[0].trim();
+                String nserie = parts[1].trim();
+                String marca = parts[2].trim();
+                String modelo = parts[3].trim();
+                String version = parts[4].trim();
+                String color = parts[5].trim();
+                double año = Double.parseDouble(parts[6].trim());
+                double precioCompra = Double.parseDouble(parts[7].trim());
+                double precioVenta = Double.parseDouble(parts[8].trim());
+                String nombrepers = parts[12].trim();
 
-                if (tipo.equals("NUEVO") && parts.length == 13) {
-                    int garantia = Integer.parseInt(parts[9]);
-                    String accesorios = parts[10];
-                    double enganche = Double.parseDouble(parts[11]);
-                    Nuevos auto = new Nuevos(garantia, accesorios, marca, modelo, version, enganche, nombrepers, nserie,
-                            color, precioVenta, año, precioCompra);
-                    inventarioAutos.add(auto);
-                } else if (tipo.equals("SEMINUEVO") && parts.length == 13) {
-                    double kilometraje = Double.parseDouble(parts[9]);
-                    int cantidadDueños = Integer.parseInt(parts[10]);
-                    String nacionalidad = parts[11];
-                    Seminuevos auto = new Seminuevos(kilometraje, año, cantidadDueños, nacionalidad, nombrepers, nserie,
-                            marca, modelo, version, color, precioVenta, precioCompra);
-                    inventarioAutos.add(auto);
+                try {
+                    if (tipo.equals("NUEVO") && parts.length == 13) {
+                        int garantia = Integer.parseInt(parts[9].trim());
+                        String accesorios = parts[10].trim();
+                        double enganche = Double.parseDouble(parts[11].trim());
+                        Nuevos auto = new Nuevos(garantia, accesorios, marca, modelo, version, enganche, nombrepers, 
+                                nserie, color, precioVenta, año, precioCompra);
+                        inventarioAutos.add(auto);
+                    } else if (tipo.equals("SEMINUEVO") && parts.length == 13) {
+                        double kilometraje = Double.parseDouble(parts[9].trim());
+                        int cantidadDueños = Integer.parseInt(parts[10].trim());
+                        String nacionalidad = parts[11].trim();
+                        Seminuevos auto = new Seminuevos(kilometraje, año, cantidadDueños, nacionalidad, nombrepers, 
+                                nserie, marca, modelo, version, color, precioVenta, precioCompra);
+                        inventarioAutos.add(auto);
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Error en el formato de los datos en línea: " + line);
                 }
             }
         } catch (IOException e) {
             System.out.println("Error al cargar el inventario: " + e.getMessage());
-        } catch (NumberFormatException e) {
-            System.out.println("Error en el formato de los datos del inventario: " + e.getMessage());
         }
     }
 
-    // Método para guardar la lista de clientes en un archivo
+    // Método para guardar la lista de clientes en un archivo con formato tabular
     private void guardarClientes() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(CLIENTES_FILE))) {
+            // Escribir encabezado
+            writer.println(String.format("%-20s|%-30s|%-15s", "Nombre", "Unidad Comprada", "Precio Compra"));
+            writer.println("-".repeat(68));
+
+            // Escribir datos
             for (Cliente cliente : listaClientes) {
-                writer.println(cliente.getNombre() + "," + cliente.getUnidadComprada() + ","
-                        + cliente.getPrecioCompra());
+                writer.println(String.format("%-20s|%-30s|%-15.2f",
+                        cliente.getNombre(), cliente.getUnidadComprada(), cliente.getPrecioCompra()));
             }
         } catch (IOException e) {
             System.out.println("Error al guardar la lista de clientes: " + e.getMessage());
@@ -191,13 +210,29 @@ public class ArrayListAutos implements Contabilidad {
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
+            boolean firstLine = true; // Saltar encabezado
+            boolean secondLine = true; // Saltar línea de guiones
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                }
+                if (secondLine) {
+                    secondLine = false;
+                    continue;
+                }
+                String[] parts = line.split("\\|");
                 if (parts.length != 3) continue; // Ignorar líneas mal formadas
 
-                String nombre = parts[0];
-                String unidadComprada = parts[1];
-                double precioCompra = Double.parseDouble(parts[2]);
+                String nombre = parts[0].trim();
+                String unidadComprada = parts[1].trim();
+                double precioCompra;
+                try {
+                    precioCompra = Double.parseDouble(parts[2].trim());
+                } catch (NumberFormatException e) {
+                    System.out.println("Error en el formato del precio en línea: " + line);
+                    continue;
+                }
 
                 // Crear un objeto Autos1 genérico para el cliente
                 Autos1 auto = new Autos1("", "", "", "", "", "", 0, 0, precioCompra) {
@@ -220,8 +255,6 @@ public class ArrayListAutos implements Contabilidad {
             }
         } catch (IOException e) {
             System.out.println("Error al cargar la lista de clientes: " + e.getMessage());
-        } catch (NumberFormatException e) {
-            System.out.println("Error en el formato de los datos de clientes: " + e.getMessage());
         }
     }
 }
