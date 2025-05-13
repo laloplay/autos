@@ -47,13 +47,13 @@ public class ArrayListAutos {
         } else {
             System.out.println("\nLista de clientes:");
             System.out.println("-------------------------------------------------");
-            System.out.printf("%-20s %-30s %-15s\n", "Nombre del Cliente", "Unidad Comprada", "Precio de Compra");
+            System.out.printf("%-20s %-30s %-15s\n", "Nombre del Cliente", "Unidad Comprada", "Precio de Venta");
             System.out.println("-------------------------------------------------");
             for (Cliente cliente : listaClientes) {
                 System.out.printf("%-20s %-30s %-15.2f\n",
                         cliente.getNombre(),
                         cliente.getUnidadComprada(),
-                        cliente.getPrecioCompra());
+                        cliente.getPrecioVenta());
             }
             System.out.println("-------------------------------------------------");
         }
@@ -179,13 +179,13 @@ public class ArrayListAutos {
     private void guardarClientes() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(CLIENTES_FILE))) {
             // Escribir encabezado
-            writer.println(String.format("%-20s|%-30s|%-15s|%-15s", "Nombre", "Unidad Comprada", "Precio Compra", "Precio Venta"));
+            writer.println(String.format("%-20s|%-30s|%-15s|%-15s", "Nombre", "Unidad Comprada", "Costo Dealership", "Precio Venta"));
             writer.println("-".repeat(83));
 
             // Escribir datos
             for (Cliente cliente : listaClientes) {
                 writer.println(String.format("%-20s|%-30s|%-15.2f|%-15.2f",
-                        cliente.getNombre(), cliente.getUnidadComprada(), cliente.getPrecioCompra(), cliente.getPrecioVenta()));
+                        cliente.getNombre(), cliente.getUnidadComprada(), cliente.getCostoDealership(), cliente.getPrecioVenta()));
             }
         } catch (IOException e) {
             System.out.println("Error al guardar la lista de clientes: " + e.getMessage());
@@ -217,19 +217,26 @@ public class ArrayListAutos {
 
                 String nombre = parts[0].trim();
                 String unidadComprada = parts[1].trim();
-                double precioCompra;
+                double costoDealership;
                 double precioVenta;
                 try {
-                    precioCompra = Double.parseDouble(parts[2].trim());
-                    // Si el archivo tiene precioVenta (nuevo formato), usarlo; si no, asumir igual a precioCompra
-                    precioVenta = parts.length > 3 ? Double.parseDouble(parts[3].trim()) : precioCompra;
+                    // En el archivo antiguo, parts[2] es el precio de venta
+                    precioVenta = Double.parseDouble(parts[2].trim());
+                    // Si hay un cuarto campo (nuevo formato), usarlo como precioVenta y parts[2] como costoDealership
+                    if (parts.length > 3) {
+                        costoDealership = Double.parseDouble(parts[2].trim());
+                        precioVenta = Double.parseDouble(parts[3].trim());
+                    } else {
+                        // Para datos antiguos, asumir un costoDealership (ajustar según sea necesario)
+                        costoDealership = precioVenta * 0.77; // Suponiendo un margen de ganancia del 30%
+                    }
                 } catch (NumberFormatException e) {
                     System.out.println("Error en el formato del precio en línea: " + line);
                     continue;
                 }
 
                 // Crear un objeto Autos1 genérico para el cliente
-                Autos1 auto = new Autos1("", "", "", "", "", "", 0, precioCompra, precioVenta) {
+                Autos1 auto = new Autos1("", "", "", "", "", "", 0, costoDealership, precioVenta) {
                     @Override
                     public String getMarca() {
                         return unidadComprada.split(" ")[0];
@@ -245,7 +252,7 @@ public class ArrayListAutos {
                         return unidadComprada.split("\\(")[1].replace(")", "");
                     }
                 };
-                listaClientes.add(new Cliente(nombre, auto, precioCompra, precioVenta));
+                listaClientes.add(new Cliente(nombre, auto, costoDealership, precioVenta));
             }
         } catch (IOException e) {
             System.out.println("Error al cargar la lista de clientes: " + e.getMessage());
