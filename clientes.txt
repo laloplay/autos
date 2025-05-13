@@ -1,3 +1,3 @@
-Nombre              |Unidad Comprada               |Precio Compra  
---------------------------------------------------------------------
-laloplay            |ram laramie (plata)           |1950000.00     
+Nombre              |Unidad Comprada               |Costo Dealership|Precio Venta   
+-----------------------------------------------------------------------------------
+lalo                |ram laramie (plata)           |1200000.00     |1500000.00     
