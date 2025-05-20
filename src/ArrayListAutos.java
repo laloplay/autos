@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 import java.io.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 public class ArrayListAutos {
     private ArrayList<Autos1> inventarioAutos = new ArrayList<>();
@@ -7,7 +9,6 @@ public class ArrayListAutos {
     private static final String INVENTARIO_FILE = "inventario.txt";
     private static final String CLIENTES_FILE = "clientes.txt";
 
-    // Constructor que carga los datos al iniciar
     public ArrayListAutos() {
         cargarInventario();
         cargarClientes();
@@ -29,10 +30,10 @@ public class ArrayListAutos {
         }
     }
 
-    public void venderAuto(int indice, String nombreCliente) {
+    public void venderAuto(int indice, String nombreCliente, LocalDate fechaCompra) {
         if (indice >= 0 && indice < inventarioAutos.size()) {
             Autos1 auto = inventarioAutos.remove(indice);
-            listaClientes.add(new Cliente(nombreCliente, auto, auto.getPrecioCompra(), auto.getPrecioVenta()));
+            listaClientes.add(new Cliente(nombreCliente, auto, auto.getPrecioCompra(), auto.getPrecioVenta(), fechaCompra));
             System.out.println("Auto vendido a " + nombreCliente + ": " + auto.getMarca() + " " + auto.getVersion());
             guardarInventario();
             guardarClientes();
@@ -46,16 +47,17 @@ public class ArrayListAutos {
             System.out.println("No hay clientes registrados.");
         } else {
             System.out.println("\nLista de clientes:");
-            System.out.println("-------------------------------------------------");
-            System.out.printf("%-20s %-30s %-15s\n", "Nombre del Cliente", "Unidad Comprada", "Precio de Venta");
-            System.out.println("-------------------------------------------------");
+            System.out.println("-------------------------------------------------------------");
+            System.out.printf("%-20s %-30s %-15s %-15s\n", "Nombre del Cliente", "Unidad Comprada", "Precio de Venta", "Fecha Compra");
+            System.out.println("-------------------------------------------------------------");
             for (Cliente cliente : listaClientes) {
-                System.out.printf("%-20s %-30s %-15.2f\n",
+                System.out.printf("%-20s %-30s %-15.2f %-15s\n",
                         cliente.getNombre(),
                         cliente.getUnidadComprada(),
-                        cliente.getPrecioVenta());
+                        cliente.getPrecioVenta(),
+                        cliente.getFechaCompra().toString());
             }
-            System.out.println("-------------------------------------------------");
+            System.out.println("-------------------------------------------------------------");
         }
     }
 
@@ -85,16 +87,13 @@ public class ArrayListAutos {
         return inventarioAutos;
     }
 
-    // Método para guardar el inventario en un archivo con formato tabular
     private void guardarInventario() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(INVENTARIO_FILE))) {
-            // Escribir encabezado
             writer.println(String.format("%-10s|%-18s|%-15s|%-15s|%-15s|%-10s|%-6s|%-12s|%-12s|%-10s|%-20s|%-12s|%-20s",
                     "Tipo", "N. Serie", "Marca", "Modelo", "Version", "Color", "Año", "P. Compra", "P. Venta", 
                     "Extra1", "Extra2", "Extra3", "Nombre Pers."));
             writer.println("-".repeat(174));
 
-            // Escribir datos
             for (Autos1 auto : inventarioAutos) {
                 if (auto instanceof Nuevos) {
                     Nuevos nuevo = (Nuevos) auto;
@@ -116,17 +115,16 @@ public class ArrayListAutos {
         }
     }
 
-    // Método para cargar el inventario desde un archivo
     private void cargarInventario() {
         File file = new File(INVENTARIO_FILE);
         if (!file.exists()) {
-            return; // Si el archivo no existe, no hay datos que cargar
+            return;
         }
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
-            boolean firstLine = true; // Saltar encabezado
-            boolean secondLine = true; // Saltar línea de guiones
+            boolean firstLine = true;
+            boolean secondLine = true;
             while ((line = reader.readLine()) != null) {
                 if (firstLine) {
                     firstLine = false;
@@ -137,7 +135,7 @@ public class ArrayListAutos {
                     continue;
                 }
                 String[] parts = line.split("\\|");
-                if (parts.length < 13) continue; // Ignorar líneas mal formadas
+                if (parts.length < 13) continue;
 
                 String tipo = parts[0].trim();
                 String nserie = parts[1].trim();
@@ -175,34 +173,32 @@ public class ArrayListAutos {
         }
     }
 
-    // Método para guardar la lista de clientes en un archivo con formato tabular
     private void guardarClientes() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(CLIENTES_FILE))) {
-            // Escribir encabezado
-            writer.println(String.format("%-20s|%-30s|%-15s|%-15s", "Nombre", "Unidad Comprada", "Costo Dealership", "Precio Venta"));
-            writer.println("-".repeat(83));
+            writer.println(String.format("%-20s|%-30s|%-15s|%-15s|%-15s", 
+                    "Nombre", "Unidad Comprada", "Costo Dealership", "Precio Venta", "Fecha Compra"));
+            writer.println("-".repeat(98));
 
-            // Escribir datos
             for (Cliente cliente : listaClientes) {
-                writer.println(String.format("%-20s|%-30s|%-15.2f|%-15.2f",
-                        cliente.getNombre(), cliente.getUnidadComprada(), cliente.getCostoDealership(), cliente.getPrecioVenta()));
+                writer.println(String.format("%-20s|%-30s|%-15.2f|%-15.2f|%-15s",
+                        cliente.getNombre(), cliente.getUnidadComprada(), cliente.getCostoDealership(), 
+                        cliente.getPrecioVenta(), cliente.getFechaCompra().toString()));
             }
         } catch (IOException e) {
             System.out.println("Error al guardar la lista de clientes: " + e.getMessage());
         }
     }
 
-    // Método para cargar la lista de clientes desde un archivo
     private void cargarClientes() {
         File file = new File(CLIENTES_FILE);
         if (!file.exists()) {
-            return; // Si el archivo no existe, no hay datos que cargar
+            return;
         }
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
-            boolean firstLine = true; // Saltar encabezado
-            boolean secondLine = true; // Saltar línea de guiones
+            boolean firstLine = true;
+            boolean secondLine = true;
             while ((line = reader.readLine()) != null) {
                 if (firstLine) {
                     firstLine = false;
@@ -213,29 +209,29 @@ public class ArrayListAutos {
                     continue;
                 }
                 String[] parts = line.split("\\|");
-                if (parts.length < 3) continue; // Ignorar líneas mal formadas
+                if (parts.length < 4) continue;
 
                 String nombre = parts[0].trim();
                 String unidadComprada = parts[1].trim();
                 double costoDealership;
                 double precioVenta;
+                LocalDate fechaCompra = null;
                 try {
-                    // En el archivo antiguo, parts[2] es el precio de venta
-                    precioVenta = Double.parseDouble(parts[2].trim());
-                    // Si hay un cuarto campo (nuevo formato), usarlo como precioVenta y parts[2] como costoDealership
-                    if (parts.length > 3) {
-                        costoDealership = Double.parseDouble(parts[2].trim());
-                        precioVenta = Double.parseDouble(parts[3].trim());
+                    costoDealership = Double.parseDouble(parts[2].trim());
+                    precioVenta = parts.length > 3 ? Double.parseDouble(parts[3].trim()) : costoDealership * 0.77;
+                    if (parts.length > 4) {
+                        fechaCompra = LocalDate.parse(parts[4].trim());
                     } else {
-                        // Para datos antiguos, asumir un costoDealership (ajustar según sea necesario)
-                        costoDealership = precioVenta * 0.77; // Suponiendo un margen de ganancia del 30%
+                        fechaCompra = LocalDate.now(); // Default to today for old records
                     }
                 } catch (NumberFormatException e) {
                     System.out.println("Error en el formato del precio en línea: " + line);
                     continue;
+                } catch (DateTimeParseException e) {
+                    System.out.println("Error en el formato de la fecha en línea: " + line);
+                    continue;
                 }
 
-                // Crear un objeto Autos1 genérico para el cliente
                 Autos1 auto = new Autos1("", "", "", "", "", "", 0, costoDealership, precioVenta) {
                     @Override
                     public String getMarca() {
@@ -252,7 +248,7 @@ public class ArrayListAutos {
                         return unidadComprada.split("\\(")[1].replace(")", "");
                     }
                 };
-                listaClientes.add(new Cliente(nombre, auto, costoDealership, precioVenta));
+                listaClientes.add(new Cliente(nombre, auto, costoDealership, precioVenta, fechaCompra));
             }
         } catch (IOException e) {
             System.out.println("Error al cargar la lista de clientes: " + e.getMessage());

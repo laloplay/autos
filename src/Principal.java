@@ -1,4 +1,6 @@
 import java.util.Scanner;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 public class Principal {
     public static void main(String[] args) {
@@ -23,7 +25,6 @@ public class Principal {
                         do {
                             reiniciarFormulario = false;
                             try {
-                                // Nombre
                                 String nombrePersona = null;
                                 int intentosNombre = 5;
                                 while (intentosNombre > 0) {
@@ -60,7 +61,6 @@ public class Principal {
                                 if (reiniciarFormulario)
                                     continue;
 
-                                // Número de serie
                                 String nserie = null;
                                 int intentosNserie = 5;
                                 while (intentosNserie > 0) {
@@ -97,7 +97,6 @@ public class Principal {
                                 if (reiniciarFormulario)
                                     continue;
 
-                                // Marca
                                 String marca = null;
                                 int intentosMarca = 5;
                                 while (intentosMarca > 0) {
@@ -133,7 +132,6 @@ public class Principal {
                                 if (reiniciarFormulario)
                                     continue;
 
-                                // Modelo
                                 String modelo = null;
                                 int intentosModelo = 5;
                                 while (intentosModelo > 0) {
@@ -169,7 +167,6 @@ public class Principal {
                                 if (reiniciarFormulario)
                                     continue;
 
-                                // Versión
                                 String version = null;
                                 int intentosVersion = 5;
                                 while (intentosVersion > 0) {
@@ -205,7 +202,6 @@ public class Principal {
                                 if (reiniciarFormulario)
                                     continue;
 
-                                // Color
                                 String color = null;
                                 int intentosColor = 5;
                                 while (intentosColor > 0) {
@@ -241,7 +237,6 @@ public class Principal {
                                 if (reiniciarFormulario)
                                     continue;
 
-                                // Año
                                 double año = 0;
                                 int intentosAño = 5;
                                 while (intentosAño > 0) {
@@ -276,7 +271,6 @@ public class Principal {
                                 if (reiniciarFormulario)
                                     continue;
 
-                                // Precio de compra
                                 double precioCompra = 0;
                                 int intentosPrecioCompra = 5;
                                 while (intentosPrecioCompra > 0) {
@@ -313,7 +307,6 @@ public class Principal {
                                 if (reiniciarFormulario)
                                     continue;
 
-                                // Precio de venta
                                 double precioVenta = 0;
                                 int intentosPrecioVenta = 5;
                                 while (intentosPrecioVenta > 0) {
@@ -351,7 +344,6 @@ public class Principal {
                                 if (reiniciarFormulario)
                                     continue;
 
-                                // Menú (nuevo o seminuevo)
                                 int menu = 0;
                                 int intentosMenu = 5;
                                 while (intentosMenu > 0) {
@@ -386,7 +378,6 @@ public class Principal {
                                     continue;
 
                                 if (menu == 1) {
-                                    // Auto nuevo
                                     int garantia = 0;
                                     int intentosGarantia = 5;
                                     while (intentosGarantia > 0) {
@@ -500,7 +491,6 @@ public class Principal {
                                             nombrePersona, nserie, color, precioVenta, año, precioCompra);
                                     listaAutos.agregarAuto(autoNuevo);
                                 } else {
-                                    // Auto seminuevo
                                     double kilometraje = 0;
                                     int intentosKilometraje = 5;
                                     while (intentosKilometraje > 0) {
@@ -655,26 +645,54 @@ public class Principal {
                                         if (indice >= 0 && indice < listaAutos.getInventarioAutos().size()) {
                                             break;
                                         } else {
-                                            Autos1 auto = listaAutos.getInventarioAutos().get(indice);
-                                            System.out.println(auto.getMarca());
+                                            System.out.println("Error: Índice fuera de los límites del arreglo");
                                         }
                                     } catch (NumberFormatException e) {
                                         System.out.println("Error: Ingrese un índice válido.");
-                                    } catch (ArrayIndexOutOfBoundsException e) {
-                                        System.out.println("Error: Índice fuera de los límites del arreglo");
-                                        continue;
                                     }
                                 }
 
                                 if (indice != -1) {
                                     System.out.println("Ingrese el nombre del cliente: ");
                                     String nombreCliente = scanner.nextLine();
+                                    LocalDate fechaCompra = null;
+                                    int intentosFecha = 5;
+                                    while (intentosFecha > 0) {
+                                        try {
+                                            System.out.println("Ingrese la fecha de compra (YYYY-MM-DD): ");
+                                            String fechaInput = scanner.nextLine();
+                                            fechaCompra = LocalDate.parse(fechaInput);
+                                            if (fechaCompra.isAfter(LocalDate.now())) {
+                                                throw new FechaInvalidaException("La fecha no puede ser futura.");
+                                            }
+                                            break;
+                                        } catch (DateTimeParseException e) {
+                                            intentosFecha--;
+                                            System.out.println("Error: Ingrese una fecha válida en formato YYYY-MM-DD.\n"
+                                                    + intentosFecha + " intentos restantes.");
+                                            if (intentosFecha == 0) {
+                                                System.out.println("Operación cancelada por demasiados intentos fallidos.");
+                                                break;
+                                            }
+                                        } catch (FechaInvalidaException e) {
+                                            intentosFecha--;
+                                            System.out.println("Error: " + e.getMessage() + "\n"
+                                                    + intentosFecha + " intentos restantes.");
+                                            if (intentosFecha == 0) {
+                                                System.out.println("Operación cancelada por demasiados intentos fallidos.");
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (intentosFecha == 0) {
+                                        break;
+                                    }
                                     try {
                                         if (nombreCliente == null || nombreCliente.trim().isEmpty()) {
                                             throw new IllegalArgumentException(
                                                     "El nombre del cliente no puede estar vacío.");
                                         }
-                                        listaAutos.venderAuto(indice, nombreCliente);
+                                        listaAutos.venderAuto(indice, nombreCliente, fechaCompra);
                                         System.out.println("Auto vendido exitosamente a " + nombreCliente + ".");
                                     } catch (IllegalArgumentException e) {
                                         System.out.println("Error: " + e.getMessage());

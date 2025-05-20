@@ -1,16 +1,20 @@
+import java.time.LocalDate;
+
 public class Cliente {
     private String nombre;
     private String unidadComprada;
-    private double costoDealership; // Costo para el concesionario (precio de compra del auto)
-    private double precioVenta; // Precio al que se vendió al cliente
+    private double costoDealership;
+    private double precioVenta;
     private double ganancia;
+    private LocalDate fechaCompra;
 
-    public Cliente(String nombre, Autos1 auto, double costoDealership, double precioVenta) {
+    public Cliente(String nombre, Autos1 auto, double costoDealership, double precioVenta, LocalDate fechaCompra) {
         this.nombre = nombre;
         this.unidadComprada = auto.getMarca() + " " + auto.getVersion() + " (" + auto.getColor() + ")";
         this.costoDealership = costoDealership;
         this.precioVenta = precioVenta;
         this.ganancia = precioVenta - costoDealership;
+        this.fechaCompra = fechaCompra;
     }
 
     public String getNombre() {
@@ -31,5 +35,9 @@ public class Cliente {
 
     public double getGanancia() {
         return ganancia;
+    }
+
+    public LocalDate getFechaCompra() {
+        return fechaCompra;
     }
 }
